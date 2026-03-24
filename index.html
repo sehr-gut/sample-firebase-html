@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Firestore CRUD</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .person-card { border: 1px solid #ccc; margin: 10px 0; padding: 10px; }
+        .handsome-dot { margin-right: 5px; }
+        .course-section { margin-left: 20px; border-left: 2px solid #eee; padding-left: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>Add New Person</h2>
+    First Name: <input type="text" id="fn"><br>
+    Last Name: <input type="text" id="ln"><br>
+    Age: <input type="number" id="age"><br>
+    Course: <input type="text" id="course"><br>
+    <label>
+        <input type="checkbox" id="isHandsome" checked> Is Handsome
+    </label><br><br>
+    <button onclick="addToDB()">Add Person</button>
+
+    <hr>
+    <div id="content">Loading people...</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getFirestore, collection, getDocs, addDoc, deleteDoc, updateDoc, doc 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 1. YOUR FIREBASE CONFIG
+        const firebaseConfig = {
+          !!! INSERT YOUR CONFIG HERE !!!
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const peopleRef = collection(db, "People");
+
+        // --- FUNCTIONS ---
+
+        // Fetch and Render
+        async function getPeopleList() {
+          const data = await getDocs(peopleRef);
+          const peopleData = await Promise.all(data.docs.map(async (personDoc) => {
+              const coursesRef = collection(db, "People", personDoc.id, "attendedCourses");
+              const snapshot = await getDocs(coursesRef);
+              const courses = snapshot.docs.map(cDoc => ({ ...cDoc.data(), course_id: cDoc.id }));
+              return { ...personDoc.data(), id: personDoc.id, courses };
+          }));
+          renderUI(peopleData)
+        }
+        const renderUI = (data) => {
+          // Clear and build the HTML string
+          const contentDiv = document.getElementById("content");
+          let html = "";
+          data.forEach(person => {
+              const color = person.isHandsome ? "green" : "red";
+              
+              html += `
+                  <div class="person-card">
+                      <h1><span style="color: ${color}">■</span> ${person.Full_Name}</h1>
+                      <p>Age: ${person.Age} <button onclick="updateAge('${person.id}')">update</button></p>
+                      <p>${person.Program} <button onclick="updateCourse('${person.id}')">update</button></p>
+                      <button onclick="deletePerson('${person.id}')">Delete Person</button>
+                      
+                      <div class="course-section">
+                          <h3>Courses:</h3>
+                          ${person.courses.map(course => `
+                              <div>
+                                  <p>
+                                      <strong>${course.course}</strong> 
+                                      <button onclick="deleteCourse('${person.id}', '${course.course_id}')">x</button>
+                                  </p>
+                                  <p>Instructor: ${course.instructor}</p>
+                                  <p>Status: ${course.passed ? "Passed" : "Failed"}</p>
+                              </div>
+                          `).join('')}
+                          <button onclick="handleAddCourseClick('${person.id}')">+ Add Course</button>
+                      </div>
+                  </div>
+              `;
+            });
+            contentDiv.innerHTML = html;
+        }
+        // Create
+        window.addToDB = async () => {
+            const firstName = document.getElementById("fn").value;
+            const lastName = document.getElementById("ln").value;
+            const age = document.getElementById("age").value;
+            const isHandsome = document.getElementById("isHandsome").checked;
+            const program = document.getElementById("course").value;
+
+            try {
+                await addDoc(peopleRef, {
+                    Full_Name: `${firstName} ${lastName}`,
+                    Age: Number(age),
+                    isHandsome: isHandsome,
+                    Program: program
+                });
+                getPeopleList();
+            } catch (err) { console.error(err); }
+        };
+
+        // Delete Person
+        window.deletePerson = async (id) => {
+            await deleteDoc(doc(db, "People", id));
+            getPeopleList();
+        };
+
+        // Update Age
+        window.updateAge = async (id) => {
+            const newAge = prompt("What is the new age:");
+            if (newAge) {
+                await updateDoc(doc(db, "People", id), { Age: Number(newAge) });
+                getPeopleList();
+            }
+        };
+
+        // Update Course
+        window.updateCourse = async (id) => {
+            const courseName = prompt("What is the new course:");
+            if (courseName) {
+                await updateDoc(doc(db, "People", id), { Program: courseName });
+                getPeopleList();
+            }
+        };
+
+        // Add Sub-collection Course
+        window.handleAddCourseClick = async (personId) => {
+            const name = prompt("Enter course name:");
+            if (!name) return;
+            const instructor = prompt("Enter instructor name:");
+            const passed = confirm("Did the student pass?");
+
+            const coursesRef = collection(db, "People", personId, "attendedCourses");
+            await addDoc(coursesRef, {
+                course: name,
+                instructor: instructor || "Unknown",
+                passed: passed,
+                dateTimeAdded: new Date().toLocaleString()
+            });
+            getPeopleList();
+        };
+
+        // Delete Sub-collection Course
+        window.deleteCourse = async (personId, courseId) => {
+            await deleteDoc(doc(db, "People", personId, "attendedCourses", courseId));
+            getPeopleList();
+        };
+
+        // Initial Load
+        getPeopleList();
+
+    </script>
+</body>
+</html>
