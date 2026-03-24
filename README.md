@@ -1,7 +1,7 @@
 # Lab 1: Integrate Firebase to an HTML file
 ## Main Contents
-### [Lab 1](#lab-1)
-### [Lab 2](#lab-2)
+### [Lab 1](#lab-1-integrate-firebase-to-an-html-file)
+### [Lab 2](#lab-2-creating-a-simple-student-recording-website)
 
 ## Content
 * [Setting up NPM](#setting-up-the-node-package-manager)
