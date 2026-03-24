@@ -2,7 +2,6 @@
 ## Main Contents
 ### [Lab 1](#lab-1)
 ### [Lab 2](#lab-2)
-### [Lab 3](#lab-3)
 
 ## Content
 * [Setting up NPM](#setting-up-the-node-package-manager)
@@ -267,5 +266,4 @@ window.handleAddCourseClick = async (personId) => {
     getPeopleList();
 };
 ```
-
 
