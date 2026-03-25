@@ -21,7 +21,7 @@ To check if you have Node.js already installed, use the commands\
 `node -v`\
 an error here means that node is not installed
 ### Installation
-For people who wants to download via the node version manager, the repository for NVVM are the following:
+For people who want to download via the node version manager, the repository for NVVM are the following:
 ### MACOS and Linux
 * [NVM](https://github.com/nvm-sh/nvm)
 * [n](https://github.com/tj/n)
